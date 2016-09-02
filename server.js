@@ -16,8 +16,8 @@ function prepFoo (opList, oId) {
 }
 
 async.waterfall([
-  prepFoo(exampleOperations, 'o3')
-  // prepFoo(operations, 'o1')
+  // prepFoo(exampleOperations, 'o3')
+  prepFoo(operations, 'o2')
 ], (err) => {
   if (err) {
     console.log('err:', err.message);

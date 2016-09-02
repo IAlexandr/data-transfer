@@ -128,6 +128,19 @@ const operations = {
         });
     }
   },
+  o2: {
+    description: 'Перегон из GeoJSON в коллекцию nedb объектов камеры школ(уже отфильтрованные по дистанции) для' +
+    ' пингера.',
+    run: (callback = () => {
+    }) => {
+      const filePath = path.resolve(__dirname, 'some-data/school-voting.json');
+      const props = {
+        nedbCollectionName: 'SchoolCamsVotingFiltered',
+        docs: require(filePath).features
+      };
+      jsonToNedb(props, callback);
+    }
+  },
 };
 
 export {operations, exampleOperations};
