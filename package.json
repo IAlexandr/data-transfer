@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "arcgis-api-client": "^1.0.1",
+    "async": "^2.0.1",
     "babel-core": "^6.9.0",
     "babel-preset-es2015": "^6.9.0",
     "babel-preset-stage-0": "^6.5.0",
@@ -18,6 +19,7 @@
     "nedb": "^1.8.0",
     "sphericalmercator": "^1.0.5",
     "terraformer": "^1.0.6",
-    "terraformer-arcgis-parser": "^1.0.5"
+    "terraformer-arcgis-parser": "^1.0.5",
+    "turf": "^3.0.14"
   }
 }

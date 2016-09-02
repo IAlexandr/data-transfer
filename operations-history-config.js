@@ -1,45 +1,100 @@
 import path from 'path';
 import arcgisFeaturesToGeojson from './lib/modules/arcgis-features-to-geojson';
-import geoJsonToNedb from './lib/modules/geojson-to-nedb';
+import jsonToNedb from './lib/modules/json-to-nedb';
+import {byDistance as filterByDistance} from './lib/modules/filtering';
+import {writeToFile} from './lib/modules/utils';
 
-// каждая операция (нового типа) заносится сюда, это нужно для примера, чтобы через n-ое кол-во времени быстро въехать.
+/*
+
+ "Каждая операция (нового типа) заносится в exampleOperations, это нужно для примера,
+ чтобы через n-ое кол-во времени быстро въехать и найти нужную операцию."
+
+ Типы операций:
+
+ - 'arcgisFeaturesToGeojson':
+ Подключение к FeatureServer => получение всех features => возвращает featureCollection (есть возможность задать конвертацию из системы координат:
+ Например:
+ coordSystemConvertOperation может быть:
+ null;
+ inverse - Convert mercator x, y values to lon, lat;
+ forward - Convert lon, lat values to mercator x, y;).
+
+ - 'geoJsonToNedb':
+ Создает коллекицю => записывает данные
+
+ - 'filtering'
+ [
+ * 'byDistance' - выбор объектов попадающих в пределах заданного расстояния
+ ]
+
+ */
+
 const exampleOperations = {
   o1: {
-    despription: 'Получение из ArcgisFeatureServer`a объектов слоя избирательные участки и сохранение в файле geojson.',
-    run: (callback = () => {}) => {
+    despription: 'Получение из ArcgisFeatureServer`a объектов слоя избирательные участки и сохранение geojson в файле.',
+    run: (callback = () => {
+    }) => {
+      const filePath = path.resolve(__dirname, 'some-data/iz_uchastki2016.json');
       const props = {
         featureServerUrl: 'http://gisweb.chebtelekom.ru/arcgis/rest/services/cheb/vybory_dep_iu_2016/FeatureServer/1',
-        filePath: path.resolve(__dirname, 'some-data/iz_uchastki2016.json'),
+        coordSystemConvertOperation: 'inverse',
+        /* coordSystemConvertOperation can be:
+         null;
+         inverse - Convert mercator x, y values to lon, lat;
+         forward - Convert lon, lat values to mercator x, y;
+         */
       };
-      arcgisFeaturesToGeojson.writeToFile(
+      arcgisFeaturesToGeojson(
         props,
-        function (err) {
+        function (err, featureCollection) {
           if (err) {
             console.log(err.message);
-          } else {
-            console.log('file saved.');
+            return callback(err);
           }
-          return callback(err);
+          writeToFile({ data: JSON.stringify(featureCollection, null, 2), filePath }, callback);
         });
     }
   },
   o2: {
     description: 'Перегон из GeoJSON в коллекцию nedb объектов камеры школ(для выборов) для пингера.',
-    run: (callback = () => {}) => {
-      const props = { filePath: path.resolve(__dirname, 'some-data/school.json'), nedbCollectionName: 'SchoolCamsForVoting' };
-      geoJsonToNedb(props, (err) => {
+    run: (callback = () => {
+    }) => {
+      const filePath = path.resolve(__dirname, 'some-data/school.json');
+      const props = {
+        nedbCollectionName: 'SchoolCamsForVoting',
+        docs: require(filePath)
+      };
+      jsonToNedb(props, callback);
+    }
+  },
+  o3: {
+    description: 'Фильтр: выбор школьных камер находящихся в пределах 500м от из. пунктов => запись в файл',
+    run (callback = () => {
+    }) {
+      const resultFilePath = path.resolve(__dirname, 'some-data/school-voting.json');
+      const school = require(path.resolve(__dirname, 'some-data/school.json'));
+      const iu_pointsFeatureCollection = require(path.resolve(__dirname, 'some-data/iz_uchastki_points2016.json'));
+      const props = {
+        featuresFrom: iu_pointsFeatureCollection.features,
+        featuresTo: school,
+        featuresToUniqKey: '_id'
+      };
+      filterByDistance(props, (err, features) => {
         if (err) {
           console.log(err.message);
-        } else {
-          console.log('GeoJSON to nedb: Finished. ', props);
+          return callback(err);
         }
-        return callback(err);
+        const featureCollection = {
+          type: 'FeatureCollection',
+            features
+        };
+        writeToFile({ data: JSON.stringify(featureCollection, null, 2), filePath: resultFilePath }, callback);
       });
     }
   },
-  // o3: {
+  // oN: {
   //   description: '',
-  //   run (callback) {
+  //   run (callback = () => {}) {
   //
   //   }
   // },
@@ -49,23 +104,30 @@ const exampleOperations = {
 const operations = {
   o1: {
     despription: 'Получение из ArcgisFeatureServer`a объектов слоя избирательные участки и сохранение в файле geojson.',
-    run: (callback = () => {}) => {
+    run: (callback = () => {
+    }) => {
+      const filePath = path.resolve(__dirname, 'some-data/iz_uchastki_points2016.json');
       const props = {
         featureServerUrl: 'http://gisweb.chebtelekom.ru/arcgis/rest/services/cheb/vybory_dep_iu_2016/FeatureServer/0',
-        filePath: path.resolve(__dirname, 'some-data/iz_uchastki_points2016.json'),
+        coordSystemConvertOperation: 'inverse',
+        /* coordSystemConvertOperation can be:
+         null;
+         inverse - Convert mercator x, y values to lon, lat;
+         forward - Convert lon, lat values to mercator x, y;
+         */
       };
-      arcgisFeaturesToGeojson.writeToFile(
+      arcgisFeaturesToGeojson(
         props,
-        function (err) {
+        function (err, featureCollection) {
           if (err) {
             console.log(err.message);
           } else {
             console.log('file saved.');
           }
-          return callback(err);
+          writeToFile({ data: JSON.stringify(featureCollection, null, 2), filePath }, callback);
         });
     }
   },
 };
 
-export { operations, exampleOperations };
+export {operations, exampleOperations};
