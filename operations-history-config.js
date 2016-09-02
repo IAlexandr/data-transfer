@@ -121,8 +121,7 @@ const operations = {
         function (err, featureCollection) {
           if (err) {
             console.log(err.message);
-          } else {
-            console.log('file saved.');
+            return callback(err);
           }
           writeToFile({ data: JSON.stringify(featureCollection, null, 2), filePath }, callback);
         });
