@@ -140,6 +140,34 @@ const operations = {
       jsonToNedb(props, callback);
     }
   },
+  o3: {
+    despription: 'Получение из ArcgisFeatureServer`a объектов слоя нежил. помещения полигоны и сохранение в файле' +
+    ' geojson.',
+    run: (callback = () => {
+    }) => {
+      const filePath = path.resolve(__dirname, 'some-data/nezhil-pomesh.json');
+      const props = {
+        featureServerUrl: 'https://chebtelekom.ru/arcgis/rest/services/pomesheniya/nezhil_pom_poligon/FeatureServer/0',
+        coordSystemConvertOperation: 'inverse',
+        username: '****',
+        password: '****'
+        /* coordSystemConvertOperation can be:
+         null;
+         inverse - Convert mercator x, y values to lon, lat;
+         forward - Convert lon, lat values to mercator x, y;
+         */
+      };
+      arcgisFeaturesToGeojson(
+        props,
+        function (err, featureCollection) {
+          if (err) {
+            console.log(err.message);
+            return callback(err);
+          }
+          writeToFile({ data: JSON.stringify(featureCollection, null, 2), filePath }, callback);
+        });
+    }
+  },
 };
 
 export {operations, exampleOperations};
