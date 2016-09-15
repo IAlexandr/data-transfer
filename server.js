@@ -14,8 +14,8 @@ complex1.run((err) => {
 
 /*
 async.waterfall([
-  // prepFoo(exampleOperations, 'o3')
-  prepFoo(operations, 'o3')
+  // prepOpFoo(exampleOperations, 'o3')
+ prepOpFoo(operations, 'o3')
 ], (err) => {
   if (err) {
     console.log('err:', err.message);
