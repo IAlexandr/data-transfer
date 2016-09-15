@@ -3,7 +3,7 @@ import arcgisFeaturesToGeojson from './lib/modules/arcgis-features-to-geojson';
 import jsonToNedb from './lib/modules/json-to-nedb';
 import {byDistance as filterByDistance} from './lib/modules/filtering';
 import {writeToFile} from './lib/modules/utils';
-import credentials from './credentials';
+import credentials from './lib/credentials';
 
 /*
 
