@@ -104,17 +104,13 @@ const exampleOperations = {
 const operations = {
   o1: {
     despription: 'Получение из ArcgisFeatureServer`a объектов слоя избирательные участки и сохранение в файле geojson.',
+    proto: 'o1',
     run: (callback = () => {
     }) => {
       const filePath = path.resolve(__dirname, 'some-data/iz_uchastki_points2016.json');
       const props = {
         featureServerUrl: 'http://gisweb.chebtelekom.ru/arcgis/rest/services/cheb/vybory_dep_iu_2016/FeatureServer/0',
-        coordSystemConvertOperation: 'inverse',
-        /* coordSystemConvertOperation can be:
-         null;
-         inverse - Convert mercator x, y values to lon, lat;
-         forward - Convert lon, lat values to mercator x, y;
-         */
+        coordSystemConvertOperation: 'inverse'
       };
       arcgisFeaturesToGeojson(
         props,
@@ -156,6 +152,29 @@ const operations = {
          inverse - Convert mercator x, y values to lon, lat;
          forward - Convert lon, lat values to mercator x, y;
          */
+      };
+      arcgisFeaturesToGeojson(
+        props,
+        function (err, featureCollection) {
+          if (err) {
+            console.log(err.message);
+            return callback(err);
+          }
+          writeToFile({ data: JSON.stringify(featureCollection, null, 2), filePath }, callback);
+        });
+    }
+  },
+  o4: {
+    despription: 'Получение из ArcgisFeatureServer`a объектов слоя stroeniya всех фичеров и сохранение в файле geojson.',
+    proto: 'o1',
+    run: (callback = () => {
+    }) => {
+      const filePath = path.resolve(__dirname, 'some-data/stroeniya.json');
+      const props = {
+        featureServerUrl: 'https://chebtelekom.ru/arcgis/rest/services/test/stroeniya/FeatureServer/0',
+        coordSystemConvertOperation: 'inverse',
+        username: '****',
+        password: '****'
       };
       arcgisFeaturesToGeojson(
         props,
