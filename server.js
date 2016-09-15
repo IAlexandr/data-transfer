@@ -1,20 +1,18 @@
 import {operations, exampleOperations} from './operations-history-config';
+import complex1 from './lib/modules/complex-ops-arcgis-get-polygons-by-points';
 import async from 'async';
+import {prepOpFoo} from './lib/modules/utils';
+
+complex1.run((err) => {
+  if (err) {
+    console.log('err:', err.message);
+  } else {
+    console.log('Finish.');
+  }
+});
 // Место для запуска на выполнение операции/й
 
-function prepFoo (opList, oId) {
-  return (callback) => {
-    opList[oId].run((err) => {
-      if (err) {
-        console.log(oId, 'err =>', err.message);
-      } else {
-        console.log(oId, '=> done.');
-      }
-      return callback();
-    })
-  };
-}
-
+/*
 async.waterfall([
   // prepFoo(exampleOperations, 'o3')
   prepFoo(operations, 'o3')
@@ -25,3 +23,4 @@ async.waterfall([
     console.log('Finish.');
   }
 });
+*/
