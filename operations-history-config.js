@@ -3,6 +3,7 @@ import arcgisFeaturesToGeojson from './lib/modules/arcgis-features-to-geojson';
 import jsonToNedb from './lib/modules/json-to-nedb';
 import {byDistance as filterByDistance} from './lib/modules/filtering';
 import {writeToFile} from './lib/modules/utils';
+import credentials from './credentials';
 
 /*
 
@@ -173,8 +174,8 @@ const operations = {
       const props = {
         featureServerUrl: 'https://chebtelekom.ru/arcgis/rest/services/test/stroeniya/FeatureServer/0',
         coordSystemConvertOperation: 'inverse',
-        username: '****',
-        password: '****'
+        username: credentials.arcgis.username,
+        password: credentials.arcgis.password
       };
       arcgisFeaturesToGeojson(
         props,
