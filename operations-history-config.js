@@ -2,7 +2,7 @@ import path from 'path';
 import arcgisFeaturesToGeojson from './lib/modules/arcgis-features-to-geojson';
 import jsonToNedb from './lib/modules/json-to-nedb';
 import {byDistance as filterByDistance} from './lib/modules/filtering';
-import {pointInsidePolygon} from './lib/modules/buffer';
+import {getFeaturesByPointsInsidePolygons, neareOfPolygonBuffer} from './lib/modules/buffer';
 import {writeToFile} from './lib/modules/utils';
 import connections from './connections.js';
 
@@ -201,7 +201,6 @@ const operations = {
       const { servicesUrl, username, password } = connections.arcgis[1];
       const props = {
         featureServerUrl: servicesUrl + '/pomesheniya/nezhil_pom_v8/FeatureServer/0',
-        coordSystemConvertOperation: 'inverse',
         username: username,
         password: password
       };
@@ -221,14 +220,14 @@ const operations = {
     despription: 'Получение массива полигонов (+ близлежащие к полигону (для получения всех строений по этому адресу (арки, подъезды, пристрои))) в которые попали точки из в файла nezhil_pomesh_points geojson.',
     run: (callback = () => {
     }) => {
-      const pointsFilePath = path.resolve(__dirname, 'some-data/nezhil_pomesh_points.json');
-      const fcPolygonsFilePath = path.resolve(__dirname, 'some-data/stroeniya_short.json');
+      const fcPoints = require(path.resolve(__dirname, 'some-data/nezhil_pomesh_points.json'));
+      const fcPolygons = require(path.resolve(__dirname, 'some-data/stroeniya_short.json'));
       const props = {
-        pointsFilePath,
-        fcPolygonsFilePath
+        fcPoints,
+        fcPolygons
       };
-
-
+      const insidePolygonsFeatures = getFeaturesByPointsInsidePolygons(fcPoints, fcPolygons);
+      const houses = neareOfPolygonBuffer(insidePolygonsFeatures, fcPolygons.features, 0.00001, 'kilometers');
 
       arcgisFeaturesToGeojson(
         props,
