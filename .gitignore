@@ -3,4 +3,4 @@ node_modules/
 some-data/
 nedb/
 npm-debug.log
-lib/connections.js
+connections/
