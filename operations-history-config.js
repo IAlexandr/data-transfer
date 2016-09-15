@@ -172,7 +172,7 @@ const operations = {
     }) => {
       const filePath = path.resolve(__dirname, 'some-data/stroeniya.json');
       const props = {
-        featureServerUrl: 'https://chebtelekom.ru/arcgis/rest/services/test/stroeniya/FeatureServer/0',
+        featureServerUrl: credentials.arcgis[1].servicesUrl + '/test/stroeniya/FeatureServer/0',
         coordSystemConvertOperation: 'inverse',
         username: credentials.arcgis.username,
         password: credentials.arcgis.password

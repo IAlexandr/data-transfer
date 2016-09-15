@@ -1,6 +1,9 @@
 module.exports = {
   arcgis: {
-    username: '****',
-    password: '****'
+    1: {
+      servicesUrl: '',
+      username: '****',
+      password: '****'
+    }
   }
 };
