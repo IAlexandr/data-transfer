@@ -3,7 +3,7 @@ import arcgisFeaturesToGeojson from './lib/modules/arcgis-features-to-geojson';
 import jsonToNedb from './lib/modules/json-to-nedb';
 import {byDistance as filterByDistance} from './lib/modules/filtering';
 import {writeToFile} from './lib/modules/utils';
-import credentials from './lib/credentials';
+import connections from './connections.js';
 
 /*
 
@@ -172,10 +172,10 @@ const operations = {
     }) => {
       const filePath = path.resolve(__dirname, 'some-data/stroeniya.json');
       const props = {
-        featureServerUrl: credentials.arcgis[1].servicesUrl + '/test/stroeniya/FeatureServer/0',
+        featureServerUrl: connections.arcgis[1].servicesUrl + '/test/stroeniya/FeatureServer/0',
         coordSystemConvertOperation: 'inverse',
-        username: credentials.arcgis.username,
-        password: credentials.arcgis.password
+        username: connections.arcgis.username,
+        password: connections.arcgis.password
       };
       arcgisFeaturesToGeojson(
         props,
