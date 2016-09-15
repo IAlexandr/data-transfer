@@ -2,6 +2,7 @@ import path from 'path';
 import arcgisFeaturesToGeojson from './lib/modules/arcgis-features-to-geojson';
 import jsonToNedb from './lib/modules/json-to-nedb';
 import {byDistance as filterByDistance} from './lib/modules/filtering';
+import {pointInsidePolygon} from './lib/modules/buffer';
 import {writeToFile} from './lib/modules/utils';
 import connections from './connections.js';
 
@@ -171,11 +172,13 @@ const operations = {
     run: (callback = () => {
     }) => {
       const filePath = path.resolve(__dirname, 'some-data/stroeniya.json');
+      const { servicesUrl, username, password } = connections.arcgis[1];
       const props = {
-        featureServerUrl: connections.arcgis[1].servicesUrl + '/test/stroeniya/FeatureServer/0',
+        featureServerUrl: servicesUrl + // '/pomesheniya/nezhil_pom_v8/FeatureServer/0',
+        '/test/stroeniya/FeatureServer/0',
         coordSystemConvertOperation: 'inverse',
-        username: connections.arcgis.username,
-        password: connections.arcgis.password
+        username: username,
+        password: password
       };
       arcgisFeaturesToGeojson(
         props,
@@ -184,6 +187,57 @@ const operations = {
             console.log(err.message);
             return callback(err);
           }
+          console.log('write to file', featureCollection.features.length);
+          writeToFile({ data: JSON.stringify(featureCollection, null, 2), filePath }, callback);
+        });
+    }
+  },
+  o5: {
+    despription: 'Получение из ArcgisFeatureServer`a объектов слоя nezhil_pomesh всех фичеров и сохранение в файле geojson.',
+    proto: 'o1',
+    run: (callback = () => {
+    }) => {
+      const filePath = path.resolve(__dirname, 'some-data/nezhil_pomesh_points.json');
+      const { servicesUrl, username, password } = connections.arcgis[1];
+      const props = {
+        featureServerUrl: servicesUrl + '/pomesheniya/nezhil_pom_v8/FeatureServer/0',
+        coordSystemConvertOperation: 'inverse',
+        username: username,
+        password: password
+      };
+      arcgisFeaturesToGeojson(
+        props,
+        function (err, featureCollection) {
+          if (err) {
+            console.log(err.message);
+            return callback(err);
+          }
+          console.log('write to file', featureCollection.features.length);
+          writeToFile({ data: JSON.stringify(featureCollection, null, 2), filePath }, callback);
+        });
+    }
+  },
+  o6: {
+    despription: 'Получение массива полигонов (+ близлежащие к полигону (для получения всех строений по этому адресу (арки, подъезды, пристрои))) в которые попали точки из в файла nezhil_pomesh_points geojson.',
+    run: (callback = () => {
+    }) => {
+      const pointsFilePath = path.resolve(__dirname, 'some-data/nezhil_pomesh_points.json');
+      const fcPolygonsFilePath = path.resolve(__dirname, 'some-data/stroeniya_short.json');
+      const props = {
+        pointsFilePath,
+        fcPolygonsFilePath
+      };
+
+
+
+      arcgisFeaturesToGeojson(
+        props,
+        function (err, featureCollection) {
+          if (err) {
+            console.log(err.message);
+            return callback(err);
+          }
+          console.log('write to file', featureCollection.features.length);
           writeToFile({ data: JSON.stringify(featureCollection, null, 2), filePath }, callback);
         });
     }
