@@ -222,23 +222,20 @@ const operations = {
     }) => {
       const fcPoints = require(path.resolve(__dirname, 'some-data/nezhil_pomesh_points.json'));
       const fcPolygons = require(path.resolve(__dirname, 'some-data/stroeniya_short.json'));
+      const filePath = path.resolve(__dirname, 'some-data/stroeniya_result.json');
       const props = {
         fcPoints,
-        fcPolygons
+        fcPolygons,
+        filePath
       };
       const insidePolygonsFeatures = getFeaturesByPointsInsidePolygons(fcPoints, fcPolygons);
-      const houses = neareOfPolygonBuffer(insidePolygonsFeatures, fcPolygons.features, 0.00001, 'kilometers');
-
-      arcgisFeaturesToGeojson(
-        props,
-        function (err, featureCollection) {
-          if (err) {
-            console.log(err.message);
-            return callback(err);
-          }
-          console.log('write to file', featureCollection.features.length);
-          writeToFile({ data: JSON.stringify(featureCollection, null, 2), filePath }, callback);
-        });
+      const stroeniyaFeatures = neareOfPolygonBuffer(insidePolygonsFeatures, fcPolygons.features, 0.00001, 'kilometers');
+      const featureCollection = {
+        type: 'FeatureCollection',
+          features: insidePolygonsFeatures.concat(stroeniyaFeatures)
+      };
+      console.log('write to file', featureCollection.features.length);
+      writeToFile({ data: JSON.stringify(featureCollection, null, 2), filePath }, callback);
     }
   },
 };
