@@ -2,9 +2,10 @@ import path from 'path';
 import arcgisFeaturesToGeojson from './lib/modules/arcgis-features-to-geojson';
 import jsonToNedb from './lib/modules/json-to-nedb';
 import {byDistance as filterByDistance} from './lib/modules/filtering';
-import {getFeaturesByPointsInsidePolygons, neareOfPolygonBuffer} from './lib/modules/buffer';
+import {getFeaturesByPointsInsidePolygons, neareOfPolygonBuffer, findBuildingsByPolygons} from './lib/modules/buffer';
 import {writeToFile} from './lib/modules/utils';
 import connections from './connections.js';
+import turfArea from 'turf-area';
 
 /*
 
@@ -88,7 +89,7 @@ const exampleOperations = {
         }
         const featureCollection = {
           type: 'FeatureCollection',
-            features
+          features
         };
         writeToFile({ data: JSON.stringify(featureCollection, null, 2), filePath: resultFilePath }, callback);
       });
@@ -217,22 +218,54 @@ const operations = {
     }
   },
   o6: {
-    despription: 'Получение массива полигонов (+ близлежащие к полигону (для получения всех строений по этому адресу (арки, подъезды, пристрои))) в которые попали точки из в файла nezhil_pomesh_points geojson.',
+    despription: 'Получение массива полигонов в которые попали точки => сохранение в файл stroeniya_polygons_preresult geojson.',
     run: (callback = () => {
     }) => {
       const fcPoints = require(path.resolve(__dirname, 'some-data/nezhil_pomesh_points.json'));
-      const fcPolygons = require(path.resolve(__dirname, 'some-data/stroeniya_short.json'));
-      const filePath = path.resolve(__dirname, 'some-data/stroeniya_result.json');
+      const fcPolygons = require(path.resolve(__dirname, 'some-data/stroeniya.json'));
+      const filePath = path.resolve(__dirname, 'some-data/stroeniya_polygons_preresult.json');
       const props = {
         fcPoints,
         fcPolygons,
         filePath
       };
       const insidePolygonsFeatures = getFeaturesByPointsInsidePolygons(fcPoints, fcPolygons);
-      const stroeniyaFeatures = neareOfPolygonBuffer(insidePolygonsFeatures, fcPolygons.features, 0.00001, 'kilometers');
       const featureCollection = {
         type: 'FeatureCollection',
-          features: insidePolygonsFeatures.concat(stroeniyaFeatures)
+        features: insidePolygonsFeatures
+      };
+      console.log('write to file', featureCollection.features.length);
+      writeToFile({ data: JSON.stringify(featureCollection, null, 2), filePath }, callback);
+    }
+  },
+  o7: {
+    despription: 'По массиву полигонов ищем близлежащие (для получения всех строений по этому адресу (арки, подъезды, пристрои)))',
+    run: (callback = () => {
+    }) => {
+      const fcPoints = require(path.resolve(__dirname, 'some-data/nezhil_pomesh_points.json'));
+      const fcPolygons = require(path.resolve(__dirname, 'some-data/stroeniya.json'));
+      const insidePolygonsFc = require(path.resolve(__dirname, 'some-data/stroeniya_polygons_preresult.json'));
+      const filePath = path.resolve(__dirname, 'some-data/stroeniya_result.json');
+      const props = {
+        fcPoints,
+        fcPolygons,
+        filePath,
+        insidePolygonsFc
+      };
+      // insidePolygonsFc.features = insidePolygonsFc.features.filter((feature) => {
+      //   return feature.properties.RegisterNo === '00010003D30E' || feature.properties.RegisterNo  === '00010003FDE0';
+      // });
+      const stroeniyaFeatures = findBuildingsByPolygons(insidePolygonsFc.features, fcPolygons.features, 0.2, 'kilometers');
+      const features = [];
+      stroeniyaFeatures.forEach((feature) => {
+        const area = turfArea(feature);
+        feature.properties['Площадь'] = area;
+        features.push(feature);
+      });
+
+      const featureCollection = {
+        type: 'FeatureCollection',
+        features: features
       };
       console.log('write to file', featureCollection.features.length);
       writeToFile({ data: JSON.stringify(featureCollection, null, 2), filePath }, callback);
