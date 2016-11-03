@@ -3,19 +3,19 @@ import complex1 from './lib/modules/complex-ops-arcgis-get-polygons-by-points';
 import async from 'async';
 import {prepOpFoo} from './lib/modules/utils';
 
-complex1.run((err) => {
-  if (err) {
-    console.log('err:', err.message);
-  } else {
-    console.log('Finish.');
-  }
-});
+// complex1.run((err) => {
+//   if (err) {
+//     console.log('err:', err.message);
+//   } else {
+//     console.log('Finish.');
+//   }
+// });
 // Место для запуска на выполнение операции/й
 
-/*
+
 async.waterfall([
   // prepOpFoo(exampleOperations, 'o3')
- prepOpFoo(operations, 'o3')
+ prepOpFoo(operations, 'o8')
 ], (err) => {
   if (err) {
     console.log('err:', err.message);
@@ -23,4 +23,4 @@ async.waterfall([
     console.log('Finish.');
   }
 });
-*/
+

@@ -6,6 +6,8 @@ import {getFeaturesByPointsInsidePolygons, neareOfPolygonBuffer, findBuildingsBy
 import {writeToFile} from './lib/modules/utils';
 import connections from './connections.js';
 import turfArea from 'turf-area';
+import XLSX from 'xlsx-style';
+import {featuresToWorkBook} from './lib/modules/xlsx';
 
 /*
 
@@ -269,6 +271,69 @@ const operations = {
       };
       console.log('write to file', featureCollection.features.length);
       writeToFile({ data: JSON.stringify(featureCollection, null, 2), filePath }, callback);
+    }
+  },
+  o8: {
+    description: 'Получение features (нто) из ArcgisFeatureServer`a, считывание xls файла с нто id`шниками => далее' +
+    ' поиск нто id`шников в features => результат записываем в xls',
+    run (callback = () => {
+    }) {
+      const xlsxFilePath = path.resolve(__dirname, 'some-data/НТО не_совсем_айдишники.xlsx');
+      const { servicesUrl, username, password } = connections.arcgis[1];
+      const props = {
+        featureServerUrl: servicesUrl + '/kom_4tel/traid_vse_vmeste_udalit_potom/FeatureServer/0',
+        username: username,
+        password: password
+      };
+      arcgisFeaturesToGeojson(
+        props,
+        function (err, featureCollection) {
+          if (err) {
+            console.log(err.message);
+            return callback(err);
+          }
+          console.log('поиск ids(xlsx) в features');
+          var workbook = XLSX.readFile(xlsxFilePath);
+          const featuresObj = {};
+          featureCollection.features.forEach((feature) => {
+            featuresObj[feature.properties.pointsourc] = 'x: ' + feature.geometry.coordinates[0] + ', y: ' + feature.geometry.coordinates[0];
+          });
+          const idsObj = {};
+          let i = 0;
+          workbook.Strings.forEach(({ t } = id) => {
+            idsObj[t] = featuresObj[t] || 'пусто';
+            !featuresObj[t] && i++;
+          });
+          // TODO подготовка featureInfo {fields, features}
+          console.log(`не найдено: ${i}, всего features: ${featureCollection.features.length}, всего ids ${workbook.Strings.length}`);
+          const featuresInfo = {
+            fields: [
+              {
+                "name": "ids",
+                "alias": "ids",
+                "type": "esriFieldTypeString",
+                "length": 500
+              },
+              {
+                "name": "xy",
+                "alias": "xy",
+                "type": "esriFieldTypeString",
+                "length": 500
+              }
+            ],
+            features: Object.keys(idsObj).map((idKey) => {
+              return { 'attributes': { "ids": idKey, "xy": idsObj[idKey] } };
+            })
+          };
+          const wb = featuresToWorkBook({featuresInfo, sheetName: 'координаты'});
+          XLSX.writeFile(wb, 'some-data/coord4nto.xlsx', {
+            bookType: 'xlsx',
+            bookSST: false,
+            type: 'binary',
+            cellStyles: true
+          });
+          return callback();
+        });
     }
   },
 };
