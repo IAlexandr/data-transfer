@@ -282,6 +282,7 @@ const operations = {
       const { servicesUrl, username, password } = connections.arcgis[1];
       const props = {
         featureServerUrl: servicesUrl + '/kom_4tel/traid_vse_vmeste_udalit_potom/FeatureServer/0',
+        coordSystemConvertOperation: 'inverse',
         username: username,
         password: password
       };
@@ -296,7 +297,7 @@ const operations = {
           var workbook = XLSX.readFile(xlsxFilePath);
           const featuresObj = {};
           featureCollection.features.forEach((feature) => {
-            featuresObj[feature.properties.pointsourc] = 'x: ' + feature.geometry.coordinates[0] + ', y: ' + feature.geometry.coordinates[0];
+            featuresObj[feature.properties.pointsourc] = 'x: ' + feature.geometry.coordinates[0].toPrecision(6) + ', y: ' + feature.geometry.coordinates[1].toPrecision(6);
           });
           const idsObj = {};
           let i = 0;
