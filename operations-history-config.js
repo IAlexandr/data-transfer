@@ -278,7 +278,7 @@ const operations = {
     ' поиск нто id`шников в features => результат записываем в xls',
     run (callback = () => {
     }) {
-      const xlsxFilePath = path.resolve(__dirname, 'some-data/НТО не_совсем_айдишники.xlsx');
+      const xlsxFilePath = path.resolve(__dirname, 'some-data/НТО_8.11.2016_остатки.xlsx');
       const { servicesUrl, username, password } = connections.arcgis[1];
       const props = {
         featureServerUrl: servicesUrl + '/kom_4tel/traid_vse_vmeste_udalit_potom/FeatureServer/0',
@@ -326,7 +326,67 @@ const operations = {
               return { 'attributes': { "ids": idKey, "xy": idsObj[idKey] } };
             })
           };
-          const wb = featuresToWorkBook({featuresInfo, sheetName: 'координаты'});
+          const wb = featuresToWorkBook({ featuresInfo, sheetName: 'координаты' });
+          XLSX.writeFile(wb, 'some-data/coord4nto.xlsx', {
+            bookType: 'xlsx',
+            bookSST: false,
+            type: 'binary',
+            cellStyles: true
+          });
+          return callback();
+        });
+    }
+  },
+  o9: {
+    description: 'Получение features (нто) из ArcgisFeatureServer`a, features => результат записываем в xls',
+    run (callback = () => {
+    }) {
+      const { servicesUrl, username, password } = connections.arcgis[1];
+      const props = {
+        featureServerUrl: servicesUrl + '/kom_4tel/traid_vse_vmeste_udalit_potom/FeatureServer/0',
+        coordSystemConvertOperation: 'inverse',
+        username: username,
+        password: password
+      };
+      arcgisFeaturesToGeojson(
+        props,
+        function (err, featureCollection) {
+          if (err) {
+            console.log(err.message);
+            return callback(err);
+          }
+          const featuresInfo = {
+            fields: [
+              {
+                "name": "ids",
+                "alias": "ids",
+                "type": "esriFieldTypeString",
+                "length": 500
+              },
+              {
+                "name": "x",
+                "alias": "x",
+                "type": "esriFieldTypeString",
+                "length": 500
+              },
+              {
+                "name": "y",
+                "alias": "y",
+                "type": "esriFieldTypeString",
+                "length": 500
+              }
+            ],
+            features: featureCollection.features.map((feature) => {
+              return {
+                'attributes': {
+                  "ids": feature.properties['pointsourc'],
+                  "x": feature.geometry.coordinates[1].toPrecision(8),
+                  "y": feature.geometry.coordinates[0].toPrecision(8)
+                }
+              }
+            })
+          };
+          const wb = featuresToWorkBook({ featuresInfo, sheetName: 'координаты' });
           XLSX.writeFile(wb, 'some-data/coord4nto.xlsx', {
             bookType: 'xlsx',
             bookSST: false,

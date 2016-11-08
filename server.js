@@ -15,7 +15,7 @@ import {prepOpFoo} from './lib/modules/utils';
 
 async.waterfall([
   // prepOpFoo(exampleOperations, 'o3')
- prepOpFoo(operations, 'o8')
+ prepOpFoo(operations, 'o9')
 ], (err) => {
   if (err) {
     console.log('err:', err.message);
