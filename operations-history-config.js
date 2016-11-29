@@ -1,13 +1,15 @@
-import path from 'path';
-import arcgisFeaturesToGeojson from './lib/modules/arcgis-features-to-geojson';
-import jsonToNedb from './lib/modules/json-to-nedb';
-import {byDistance as filterByDistance} from './lib/modules/filtering';
-import {getFeaturesByPointsInsidePolygons, neareOfPolygonBuffer, findBuildingsByPolygons} from './lib/modules/buffer';
-import {writeToFile} from './lib/modules/utils';
-import connections from './connections.js';
-import turfArea from 'turf-area';
-import XLSX from 'xlsx-style';
-import {featuresToWorkBook} from './lib/modules/xlsx';
+import path from "path";
+import arcgisFeaturesToGeojson from "./lib/modules/arcgis-features-to-geojson";
+import jsonToNedb from "./lib/modules/json-to-nedb";
+import {byDistance as filterByDistance} from "./lib/modules/filtering";
+import {getFeaturesByPointsInsidePolygons, findBuildingsByPolygons} from "./lib/modules/buffer";
+import {writeToFile, get, prepOpFooV2, prepOpFooV3} from "./lib/modules/utils";
+import connections from "./connections.js";
+import turfArea from "turf-area";
+import XLSX from "xlsx-style";
+import {featuresToWorkBook, sheetToFeatures} from "./lib/modules/xlsx";
+import {geocode} from "./lib/modules/ya-geocoder";
+import async from "async";
 
 /*
 
@@ -95,6 +97,85 @@ const exampleOperations = {
         };
         writeToFile({ data: JSON.stringify(featureCollection, null, 2), filePath: resultFilePath }, callback);
       });
+    }
+  },
+  o4: { // prepOpFooV2
+    description: 'Геокодирование списка адресов из building-texture-editor API (G2)',
+    run (prms, callback = () => {
+    }) {
+      const { H2 } = prms;
+      if (!H2 && !H2.length) {
+        return callback(new Error('Список адресов пуст!'));
+      }
+      const G2 = {};
+      async.eachLimit(H2, 1, (item, done) => {
+        geocode(item)
+          .then(res => {
+            const pos = res.Point.pos;
+            if (!G2.hasOwnProperty(pos)) {
+              G2[res.Point.pos] = {
+                source: {},
+                geocodeInfo: res
+              };
+            }
+            if (G2[res.Point.pos].source.hasOwnProperty(item.address)) {
+              console.log('Повторяющийся адрес', item.address);
+            } else {
+              G2[res.Point.pos].source[item.address] = item;
+            }
+          })
+          .catch(done);
+      }, (err) => {
+        return callback(err, { ...prms, ...{ G2 } });
+      });
+    }
+  },
+  o5: { // prepOpFooV2
+    description: 'Получение списка адресов из building-texture-editor API (H2)',
+    run (prms, callback = () => {
+    }) {
+      get(`${connections.urls.buildingTextureEditorApi}/address`)
+        .then(H2 => {
+          return callback(null, { ...prms, ...{ H2 } });
+        })
+        .catch(err => {
+          return callback(err);
+        });
+    }
+  },
+  o6: {
+    description: 'Считываем из xlsx определенный лист',
+    run (prms, callback = () => {
+    }) {
+      const { xlsxFilePath, sheetName } = prms;
+      const workbook = XLSX.readFile(xlsxFilePath);
+      const sheet = workbook.Sheets[sheetName];
+      const xlsxFeatures = sheetToFeatures(sheet);
+      return callback(null, { ...prms, ...{ xlsxFeatures } });
+    }
+  },
+  o7: { // prepOpFooV3
+    /*
+     prepOpFooV2(exampleOperations, 'o7', {
+     db: mongoDb,
+     colName: 'Building',
+     expression: {},
+     resultPrmsKey: 'buildings'
+     }),
+     * */
+    description: 'Подключение к mongodb, получение документов по заданному expressions',
+    run (prms, callback = () => {
+    }) {
+      prms.db[prms.colName][prms.method](prms.expression, (err, docs) => {
+        return callback(err, { ...prms, ...{ [prms.resultPrmsKey]: docs } });
+      });
+    }
+  },
+  o8: {
+    description: '',
+    run (callback = () => {
+    }) {
+
     }
   },
   // oN: {
@@ -395,6 +476,97 @@ const operations = {
           });
           return callback();
         });
+    }
+  },
+  o10: {  // prepOpFooV2
+    description: 'Сохранение в коллекцию nedb геокодированный сгрупированный список адресов H2',
+    run: (prms, callback = () => {
+    }) => {
+      const { G2 } = prms;
+      if (!G2 && !G2.length) {
+        return callback(new Error('Геокодированный cписок адресов(G2) пуст!'));
+      }
+      const props = {
+        nedbCollectionName: 'G2',
+        docs: G2
+      };
+      jsonToNedb(props, (err, G2) => {
+        return callback(err, { ...prms, ...{ G2 } });
+      });
+    }
+  },
+  o11: {  // prepOpFooV2
+    description: 'Проходимся по всем xlsFeatures ищем в db.buildings {xlsFeature.ID === buildings.properties.OBJECTID}',
+    run: (prms, callback = () => {
+    }) => {
+      const { db } = prms;
+      console.log('Устанавливаем всем адресам ID == "" для обновления');
+      db.Address.update({}, { $set: { ID: '' } }, { multi: true }, (err, res) => {
+        if (err) {
+          return callback(err);
+        }
+        console.log('адресов обновлено:', res.n);
+        console.log('Начинаем поиск связей между xlsxFeatures и buildings.');
+        let notFoundBuildings = {};
+        let foundAddresses = {};
+        async.eachLimit(Object.keys(prms.xlsxFeatures), 1, (xlsFeatureKey, done) => {
+          const xlsFeature = prms.xlsxFeatures[xlsFeatureKey];
+          const [OBJECTID, BTI_JPG_INDEX] = xlsFeature.ID.toString().split('-');
+          async.waterfall([
+            prepOpFooV2(exampleOperations, 'o7', {
+              db,
+              method: 'findOne',
+              colName: 'Building',
+              expression: { 'properties.OBJECTID': OBJECTID },
+              resultPrmsKey: 'buildingDoc'
+            }),
+            function (prms, callback) {
+              return callback(!prms.buildingDoc, prms);
+            },
+            // prepOpFooV3(operations, 'o7', props => ({
+            //   db,
+            //   method: 'find',
+            //   colName: 'Building',
+            //   expression: { 'ParentRegisterNo': props.buildingDoc.ParentRegisterNo },
+            //   resultPrmsKey: 'buildingsByParentRegNo'
+            // })),
+            prepOpFooV3(exampleOperations, 'o7', props => {
+              // console.log('prepOpFooV3 findOne Address.RegisterNo:', props.buildingDoc.properties.ParentRegisterNo);
+              return {
+                db,
+                  method: 'findOne',
+                colName: 'Address',
+                expression: { 'RegisterNo': props.buildingDoc.properties.ParentRegisterNo },
+                resultPrmsKey: 'addressDoc'
+              }
+            }),
+            function (props, callback) {
+            if (!props.addressDoc) {
+              console.log('Address не найден с RegisterNo', props.buildingDoc.properties.ParentRegisterNo);
+              return callback();
+            } else {
+              props.addressDoc.ID = OBJECTID.toString();
+              foundAddresses[OBJECTID] = {};
+              props.addressDoc.save(err => callback(err));
+            }
+            }
+          ], (err) => {
+            if (err) {
+              if (err !== true) {
+                return done(err);
+              }
+              // console.log(`building.properties.OBJECTID === '${OBJECTID}' [${!BTI_JPG_INDEX ? '-' : BTI_JPG_INDEX}] => NOT FOUND!`);
+              notFoundBuildings[OBJECTID] = {};
+              return done();
+            }
+            return done();
+          });
+        }, (err) => {
+          console.log('Ненайденное кол-во строений по `properties.OBJECTID`: xlsFeature.ID =>', Object.keys(notFoundBuildings).length);
+          console.log('pmrs.addressDoc.ID = xlsFeature.ID; =>', Object.keys(foundAddresses).length);
+          return callback(err);
+        });
+      });
     }
   },
 };
