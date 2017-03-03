@@ -143,7 +143,7 @@ const exampleOperations = {
         });
     }
   },
-  o6: {
+  o6: { // prepOpFooV2
     description: 'Считываем из xlsx определенный лист',
     run (prms, callback = () => {
     }) {
@@ -171,11 +171,29 @@ const exampleOperations = {
       });
     }
   },
-  o8: {
-    description: '',
-    run (callback = () => {
+  o8: { // prepOpFooV2
+    description: 'Подключение к pg и запись документов',
+    run (prms, callback = () => {
     }) {
-
+      prms.db[prms.colName][prms.method](prms.expression, (err, docs) => {
+        return callback(err, { ...prms, ...{ [prms.resultPrmsKey]: docs } });
+      });
+    }
+  },
+  o9: { // prepOpFooV2
+    description: 'Поиск в nedb',
+    run (prms, callback = () => {}) {
+      prms.nedb[prms.colName][prms.method](prms.expression, 0, 0, (err, docs) => {
+        return callback(err, docs);
+      });
+    }
+  },
+  o10: { // prepOpFooV2
+    description: 'Обновление в nedb',
+    run (prms, callback = () => {}) {
+      prms.nedb[prms.colName][prms.method](prms.doc._id, prms.doc, (err, doc) => {
+        return callback(err, doc);
+      });
     }
   },
   // oN: {
