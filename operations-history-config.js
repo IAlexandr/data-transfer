@@ -196,6 +196,27 @@ const exampleOperations = {
       });
     }
   },
+  o11: { // prepOpFooV3
+    /*
+     prepOpFooV2(exampleOperations, 'o7', {
+     db: mongoDb,
+     colName: 'Building',
+     expression: {},
+     resultPrmsKey: 'buildings'
+     }),
+     * */
+    description: 'Подключение к mongodb, (LEAN, skip, limit) получение документов по заданному expressions',
+    run (prms, callback = () => {
+    }) {
+      prms.db[prms.colName][prms.method]().skip(prms.skip).limit(prms.limit).lean().exec(prms.expression, (err, docs) => {
+        if (!prms.hasOwnProperty(prms.resultPrmsKey)) {
+          prms[prms.resultPrmsKey] = [];
+        }
+        prms[prms.resultPrmsKey] = prms[prms.resultPrmsKey].concat(docs);
+        return callback(err, prms);
+      });
+    }
+  },
   // oN: {
   //   description: '',
   //   run (callback = () => {}) {
