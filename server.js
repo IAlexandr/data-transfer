@@ -1,5 +1,6 @@
 // import complexNezhilPomToFs from "./lib/modules/complex-nezhil-pom-to-fs";
-import complexMongoGeojsonArcgisfc from "./lib/modules/complex-mongo-geojson-arcgisfc";
+// import complexMongoGeojsonArcgisfc from "./lib/modules/complex-mongo-geojson-arcgisfc";
+import complexXlsToSchoolNedb from "./lib/modules/complex-xls-to-school-nedb";
 // import complexXlsWialonTechListToTxt from "./lib/modules/complex-xls-wialon-tech-list-to-txt";
 // import nedbXlsFindModify from "./lib/modules/nedb-xls-find-modify";
 
@@ -39,7 +40,15 @@ import complexMongoGeojsonArcgisfc from "./lib/modules/complex-mongo-geojson-arc
 //   }
 // });
 
-complexMongoGeojsonArcgisfc.run((err) => {
+// complexMongoGeojsonArcgisfc.run((err) => {
+//   if (err) {
+//     console.log(err.message);
+//   } else {
+//     console.log('Finish');
+//   }
+// });
+
+complexXlsToSchoolNedb.run((err) => {
   if (err) {
     console.log(err.message);
   } else {
