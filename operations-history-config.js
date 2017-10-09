@@ -147,10 +147,10 @@ const exampleOperations = {
     description: 'Считываем из xlsx определенный лист',
     run (prms, callback = () => {
     }) {
-      const { xlsxFilePath, sheetName } = prms;
+      const { xlsxFilePath, sheetName, headersValidateFoo } = prms;
       const workbook = XLSX.readFile(xlsxFilePath);
       const sheet = workbook.Sheets[sheetName];
-      const xlsxFeatures = sheetToFeatures(sheet);
+      const xlsxFeatures = sheetToFeatures(sheet, headersValidateFoo);
       return callback(null, { ...prms, ...{ xlsxFeatures } });
     }
   },
