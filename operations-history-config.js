@@ -608,6 +608,29 @@ const operations = {
       });
     }
   },
+  o12: {
+    despription: 'Получение из ArcgisFeatureServer`a объектов слоя kaprem2017 всех фичеров и сохранение в файле geojson.',
+    proto: 'o1',
+    run: (callback = () => {
+    }) => {
+      const filePath = path.resolve(__dirname, 'some-data/kaprem2017.json');
+      // const { servicesUrl, username, password } = connections.arcgis[1];
+      const props = {
+        featureServerUrl: 'http://gisweb.chebtelekom.ru:8080/arcgis/rest/services/kaprem2017/kaprem2017/FeatureServer/0',
+        coordSystemConvertOperation: 'inverse',
+      };
+      arcgisFeaturesToGeojson(
+        props,
+        function (err, featureCollection) {
+          if (err) {
+            console.log(err.message);
+            return callback(err);
+          }
+          console.log('write to file', featureCollection.features.length);
+          writeToFile({ data: JSON.stringify(featureCollection, null, 2), filePath }, callback);
+        });
+    }
+  },
 };
 
 export {operations, exampleOperations};

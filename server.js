@@ -3,6 +3,9 @@
 import complexXlsToSchoolNedb from "./lib/modules/complex-xls-to-school-nedb";
 // import complexXlsWialonTechListToTxt from "./lib/modules/complex-xls-wialon-tech-list-to-txt";
 // import nedbXlsFindModify from "./lib/modules/nedb-xls-find-modify";
+import async from 'async';
+import {prepOpFoo} from "./lib/modules/utils";
+import {operations} from "./operations-history-config";
 
 // complex1.run((err) => {
 //   if (err) {
@@ -48,10 +51,21 @@ import complexXlsToSchoolNedb from "./lib/modules/complex-xls-to-school-nedb";
 //   }
 // });
 
-complexXlsToSchoolNedb.run((err) => {
+// complexXlsToSchoolNedb.run((err) => {
+//   if (err) {
+//     console.log(err.message);
+//   } else {
+//     console.log('Finish');
+//   }
+// });
+
+async.waterfall([
+  // prepOpFoo(exampleOperations, 'o3')
+ prepOpFoo(operations, 'o12')
+], (err) => {
   if (err) {
-    console.log(err.message);
+    console.log('err:', err.message);
   } else {
-    console.log('Finish');
+    console.log('Finish.');
   }
 });
